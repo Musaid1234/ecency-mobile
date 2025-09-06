@@ -1,0 +1,149 @@
+import React, { Fragment, useState } from 'react';
+import { useWindowDimensions, View } from 'react-native';
+import { useIntl } from 'react-intl';
+
+import RootNavigation from '../../../../navigation/rootNavigation';
+
+// Constants
+import { default as ROUTES } from '../../../../constants/routeNames';
+import { PostHtmlRenderer, TextButton } from '../../..';
+
+// Styles
+import styles from './commentBodyStyles';
+
+// Services and Actions
+import { toastNotification } from '../../../../redux/actions/uiAction';
+
+import { useAppDispatch } from '../../../../hooks';
+import { isCommunity } from '../../../../utils/communityValidation';
+import { GLOBAL_POST_FILTERS_VALUE } from '../../../../constants/options/filters';
+
+interface CommentBodyProps {
+  body: string;
+  metadata?: any;
+  commentDepth: number;
+  hideContent: boolean;
+  handleOnUserPress: () => void;
+  handleOnPostPress: () => void;
+  handleVideoPress: () => void;
+  handleYoutubePress: () => void;
+  handleImagePress: () => void;
+  handleLinkPress: () => void;
+  handleParaSelection: (selectedText: string) => void;
+}
+
+const CommentBody = ({
+  body,
+  metadata,
+  commentDepth,
+  hideContent,
+  handleOnUserPress,
+  handleOnPostPress,
+  handleVideoPress,
+  handleYoutubePress,
+  handleImagePress,
+  handleLinkPress,
+  handleParaSelection,
+}: CommentBodyProps) => {
+  const dispatch = useAppDispatch();
+  const dims = useWindowDimensions();
+
+  const [revealComment, setRevealComment] = useState(!hideContent);
+
+  const intl = useIntl();
+
+  const _contentWidth = dims.width - (40 + 28 + (commentDepth > 2 ? 44 : 0));
+
+  const _showLowComment = () => {
+    setRevealComment(true);
+  };
+
+  const _handleTagPress = (tag: string, filter: string = GLOBAL_POST_FILTERS_VALUE[0]) => {
+    if (tag) {
+      const name = isCommunity(tag) ? ROUTES.SCREENS.COMMUNITY : ROUTES.SCREENS.TAG_RESULT;
+      const key = `${filter}/${tag}`;
+      RootNavigation.navigate({
+        name,
+        params: {
+          tag,
+          filter,
+          key,
+        },
+      });
+    }
+  };
+
+  const _handleOnPostPress = (permlink, author) => {
+    if (handleOnPostPress) {
+      handleOnPostPress(permlink, author);
+      return;
+    }
+    if (permlink) {
+      RootNavigation.navigate({
+        name: ROUTES.SCREENS.POST,
+        params: {
+          author,
+          permlink,
+        },
+        key: `@${author}/${permlink}`,
+      });
+    }
+  };
+
+  const _handleOnUserPress = (username) => {
+    if (handleOnUserPress) {
+      handleOnUserPress(username);
+      return;
+    }
+    if (username) {
+      RootNavigation.navigate({
+        name: ROUTES.SCREENS.PROFILE,
+        params: {
+          username,
+        },
+        key: username,
+      });
+    } else {
+      dispatch(
+        toastNotification(
+          intl.formatMessage({
+            id: 'post.wrong_link',
+          }),
+        ),
+      );
+    }
+  };
+
+  return (
+    <Fragment>
+      {revealComment ? (
+        <View>
+          <PostHtmlRenderer
+            key={`comment_width_${_contentWidth}`}
+            contentWidth={_contentWidth}
+            body={body}
+            metadata={metadata}
+            isComment={true}
+            setSelectedImage={handleImagePress}
+            setSelectedLink={handleLinkPress}
+            handleOnPostPress={_handleOnPostPress}
+            handleOnUserPress={_handleOnUserPress}
+            handleTagPress={_handleTagPress}
+            handleVideoPress={handleVideoPress}
+            handleYoutubePress={handleYoutubePress}
+            handleParaSelection={handleParaSelection}
+          />
+        </View>
+      ) : (
+        <TextButton
+          style={styles.revealButton}
+          textStyle={styles.revealText}
+          onPress={() => _showLowComment()}
+          text={intl.formatMessage({ id: 'comments.reveal_comment' })}
+        />
+      )}
+    </Fragment>
+  );
+};
+
+export default CommentBody;
