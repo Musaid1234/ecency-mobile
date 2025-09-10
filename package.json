@@ -9,7 +9,7 @@
     ]
   },
   "scripts": {
-    "version": "./version-ios.sh",
+    "version": "./version-ios.sh", 
     "postversion": "react-native-version --never-amend --legacy",
     "start": "react-native start",
     "android": "react-native run-android",
