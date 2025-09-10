@@ -17,7 +17,6 @@ import './navigation/sheets';
 
 const queryClientProviderProps = initQueryClient();
 
-// sets up contexts
 const _renderApp = ({ locale }) => (
   <PersistQueryClientProvider {...queryClientProviderProps}>
     <PersistGate loading={null} persistor={persistor}>
